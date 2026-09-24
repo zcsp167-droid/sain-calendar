@@ -1,0 +1,144 @@
+{
+  "assumption": "Independent uniform 20% box types; 100% mission grants kirin 2 and one box granting 5 of one type; all actions 30h; cap is target; no failure.",
+  "cap": 50,
+  "samples": 200000,
+  "exact": {
+    "baseline": 55.631931674983534,
+    "optimal": 55.39419657407994,
+    "saving": 0.23773510090359196
+  },
+  "worst": {
+    "saving": 0.9921722412109375,
+    "k": 0,
+    "deficits": [
+      45,
+      0,
+      45,
+      0,
+      0
+    ],
+    "baseline": 46,
+    "optimal": 45.00782775878906
+  },
+  "residualWorst": {
+    "saving": 0.9921722412109375,
+    "deficits": [
+      45,
+      0,
+      45,
+      0,
+      0
+    ],
+    "baseline": 46,
+    "optimal": 45.00782775878906
+  },
+  "simulation": {
+    "baseline": {
+      "mean": 55.6378,
+      "sd": 3.115399037041674,
+      "standardError": 0.006966244023862569,
+      "p50": 56,
+      "p90": 60,
+      "p95": 61,
+      "p99": 63,
+      "min": 45,
+      "max": 70
+    },
+    "optimal": {
+      "mean": 55.401485,
+      "sd": 3.6643355188594016,
+      "standardError": 0.008193703312536585,
+      "p50": 55,
+      "p90": 60,
+      "p95": 62,
+      "p99": 66,
+      "min": 45,
+      "max": 92
+    },
+    "pairedDifference": {
+      "mean": 0.236315,
+      "sd": 2.1049988647918556,
+      "standardError": 0.004706920554234478,
+      "p50": 0,
+      "p90": 2,
+      "p95": 3,
+      "p99": 5,
+      "min": -33,
+      "max": 13
+    },
+    "optimalBetter": 64858,
+    "baselineBetter": 26687,
+    "ties": 108455,
+    "gainAtLeast2": 43446,
+    "gainGreater2": 15958,
+    "preDirect": 823795
+  },
+  "extremeExamples": [
+    {
+      "alwaysBoxType": 0,
+      "baseline": {
+        "n": 75,
+        "boxes": 25,
+        "preKirinDirect": 0
+      },
+      "optimal": {
+        "n": 75,
+        "boxes": 25,
+        "preKirinDirect": 48
+      }
+    },
+    {
+      "alwaysBoxType": 1,
+      "baseline": {
+        "n": 75,
+        "boxes": 25,
+        "preKirinDirect": 0
+      },
+      "optimal": {
+        "n": 75,
+        "boxes": 25,
+        "preKirinDirect": 48
+      }
+    },
+    {
+      "alwaysBoxType": 2,
+      "baseline": {
+        "n": 75,
+        "boxes": 25,
+        "preKirinDirect": 0
+      },
+      "optimal": {
+        "n": 75,
+        "boxes": 25,
+        "preKirinDirect": 48
+      }
+    },
+    {
+      "alwaysBoxType": 3,
+      "baseline": {
+        "n": 75,
+        "boxes": 25,
+        "preKirinDirect": 0
+      },
+      "optimal": {
+        "n": 75,
+        "boxes": 25,
+        "preKirinDirect": 48
+      }
+    },
+    {
+      "alwaysBoxType": 4,
+      "baseline": {
+        "n": 58,
+        "boxes": 8,
+        "preKirinDirect": 0
+      },
+      "optimal": {
+        "n": 58,
+        "boxes": 8,
+        "preKirinDirect": 50
+      }
+    }
+  ],
+  "seconds": 0.8151457
+}

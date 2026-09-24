@@ -1,0 +1,7 @@
+{
+  "baselineMin": 45,
+  "baselineMax": 75,
+  "optimalPolicyMin": 42,
+  "optimalPolicyMax": "Infinity",
+  "seconds": 0.6965238
+}

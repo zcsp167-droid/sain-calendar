@@ -1,0 +1,25 @@
+const assert=require('assert/strict'),fs=require('fs'),vm=require('vm');
+const Model=require('../model'),Backup=require('../backup'),ChangeLog=require('../change-log');
+const source=fs.readFileSync(require.resolve('../main'),'utf8');
+const initial=Model.normalize({currentTickets:12,personalNotes:{}});
+const log=ChangeLog.observe(ChangeLog.empty(),Model.normalize(),initial);
+const packed=Backup.pack(initial,log);
+assert.deepEqual(Backup.unpackChanges(packed),log);
+assert.equal(Backup.unpack(packed).currentTickets,12);
+assert.deepEqual(Backup.unpackChanges({}),ChangeLog.empty());
+assert.throws(()=>Backup.unpackChanges({changeLog:{...log,sequence:-1}}));
+const handlers={},writes=[],saved=[];
+let response=2,canceled=false,fail=false,opened=0,startupCalls=0;
+const context={Model,Backup,ChangeLog,sessionVersion:0,win:{},settingsWin:null,view:()=>initial,readChanges:()=>log,write:(state,history)=>writes.push({state,history}),setStartup:()=>startupCalls++,resetSounds:()=>{},openSettings:()=>opened++,dialog:{showMessageBox:async()=>({response}),showSaveDialog:async()=>({canceled,filePath:'backup.json'})},fs:{writeFileSync:(file,data)=>{if(fail)throw Error('disk full');saved.push(JSON.parse(data));}},ipcMain:{handle:(name,handler)=>handlers[name]=handler}};
+vm.createContext(context);
+vm.runInContext(source.slice(source.indexOf('async function exportBackup()'),source.indexOf("ipcMain.handle('import-backup'")),context);
+vm.runInContext(source.slice(source.indexOf("ipcMain.handle('reset-settings'"),source.indexOf("ipcMain.on('minimize-window'")),context);
+(async()=>{
+ assert((await handlers['reset-settings']()).cancelled);assert.equal(writes.length,0);
+ response=0;canceled=true;assert((await handlers['reset-settings']()).cancelled);assert.equal(writes.length,0);
+ canceled=false;fail=true;assert.equal((await handlers['reset-settings']()).ok,false);assert.equal(writes.length,0);assert.equal(startupCalls,0);
+ fail=false;assert((await handlers['reset-settings']()).ok);assert.equal(saved.length,1);assert.deepEqual(saved[0].changeLog,log);assert.equal(writes[0].state.currentTickets,0);assert.deepEqual(writes[0].history,ChangeLog.empty());
+ response=1;assert((await handlers['reset-settings']()).ok);assert.equal(saved.length,1);assert.equal(writes.length,2);assert.equal(opened,2);
+ context.dialog.showMessageBox=async()=>{context.sessionVersion++;return {response:1};};assert((await handlers['reset-settings']()).cancelled);assert.equal(writes.length,2);
+ console.log('PASS: backup history roundtrip, legacy backup, invalid history, cancel, save cancellation/failure, backup before reset, direct reset and stale session guard.');
+})().catch(e=>{console.error(e);process.exitCode=1;});
