@@ -1,0 +1,6 @@
+importScripts('model.js','solver.js','schedule.js','comparison.js');
+onmessage=e=>{try{let {state,analysis,now,holidays,custom,mode,keep}=e.data;state=Model.normalize(state);if(state.missionDraft)state=Model.wizardPatch(state,state,new Date(now));if(!analysis)analysis=Solver.analyze({qty:Model.samQuantity(state),strategy:state.strategy,activeAction:state.activeMission?.phase==='sam'?state.activeMission.action:null,activeUnknown:state.activeMission?.phase==='sam'&&state.activeMission.action===null});
+ // 사용량 선택지(①②③) 또는 고정 사용량 재계산
+ if(mode==='options'){postMessage({result:Completion.usageOptions(state,analysis,now,holidays,Schedule,keep)});return;}
+ if(mode==='kept'){postMessage({result:Completion.usageOptions(state,analysis,now,holidays,Schedule,{g:state.gueseoTotal,m:state.masterBudget},true)});return;}
+ const result=Completion.compare(state,analysis,now,holidays,Schedule,n=>postMessage({progress:n}),custom);if(e.data.previewSnapshot){const preview=Model.normalize({...e.data.previewSnapshot,sainReadyPlan:true});result.current=Schedule.makePlan(preview,Math.ceil(analysis.counts.reduce((a,b)=>a+b,0)/analysis.counts.length),now,holidays);}postMessage({result});}catch(error){postMessage({error:error.message});}};

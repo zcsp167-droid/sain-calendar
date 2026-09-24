@@ -1,0 +1,48 @@
+{
+  "name": "personal-calendar",
+  "version": "1.1.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable --x64"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "Gersang.SainCalendar",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!backup{,/**}",
+      "!backups{,/**}",
+      "!인수인계{,/**}",
+      "!verification{,/**}",
+      "!dist{,/**}",
+      "!**/*.bat",
+      "!**/*.vbs",
+      "!**/*.json",
+      "!AGENTS.md",
+      "!검수{,/**}",
+      "!개발철학.md",
+      "!README.txt",
+      "!사용설명서.txt",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "app-icon.ico",
+      "artifactName": "SainCalendar-${version}-portable.${ext}"
+    }
+  }
+}
