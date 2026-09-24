@@ -1,0 +1,96 @@
+# 공개 소스로 GitHub 서버가 exe를 빌드 → zip(exe · 제거.bat · 사용설명서.txt)으로 묶어 Releases(v버전)에 공개
+# 버전당 한 번만: Releases에 같은 버전이 이미 있으면 건너뜀(이미 공개한 파일 유지)
+# 새 버전: package.json의 version을 올려서 업로드 · Actions 탭 Run workflow도 같은 규칙
+# 순서: 초안으로 파일 첨부 → 공개(Releases 잠금 사용 시에도 동작) · 공개 저장소면 빌드 증명서(Attestation) 첨부
+name: Build exe
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version
+        id: version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          "value=$v" >> $env:GITHUB_OUTPUT
+          gh release view "v$v" 2>$null | Out-Null
+          if ($LASTEXITCODE -eq 0) { "exists=true" >> $env:GITHUB_OUTPUT; Write-Host "v$v 이미 있음 · 빌드 건너뜀" } else { "exists=false" >> $env:GITHUB_OUTPUT }
+          exit 0
+
+      - uses: actions/setup-node@v4
+        if: steps.version.outputs.exists != 'true'
+        with:
+          node-version: 20
+
+      - name: Install
+        if: steps.version.outputs.exists != 'true'
+        run: npm ci
+
+      - name: Build portable exe
+        if: steps.version.outputs.exists != 'true'
+        run: npx electron-builder --win portable --x64 --publish never
+
+      - name: Package zip
+        if: steps.version.outputs.exists != 'true'
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.value }}'
+          $folder = "release/사인검 제작 달력 $v"
+          New-Item -ItemType Directory -Force $folder | Out-Null
+          Copy-Item "dist/SainCalendar-$v-portable.exe" $folder
+          Copy-Item "제거.bat" $folder
+          Copy-Item "README.txt" "$folder/사용설명서.txt"
+          Compress-Archive -Path $folder -DestinationPath "release/SainCalendar-$v.zip"
+          Get-ChildItem release -Recurse | Select-Object FullName, Length
+
+      - name: Build provenance (public repository only)
+        if: steps.version.outputs.exists != 'true' && github.event.repository.private == false
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            release/SainCalendar-${{ steps.version.outputs.value }}.zip
+            dist/SainCalendar-${{ steps.version.outputs.value }}-portable.exe
+
+      # Releases 설명 = README 전체(저장소 첫 화면과 같은 내용) · 줄바꿈 유지, ■ 제목 굵게
+      - name: Release notes from README
+        if: steps.version.outputs.exists != 'true'
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.value }}'
+          $lines = (Get-Content README.txt -Encoding utf8) | ForEach-Object {
+            $l = $_.Replace('(버전)', $v).Replace('*','\*').Replace('_','\_').Replace('~','\~')
+            if ($l -match '^■') { "**$l**  " } elseif ($l.Trim() -eq '') { '' } else { ($l -replace '^(\d+)\. ','$1\. ') + '  ' }
+          }
+          Set-Content -Path release-notes.md -Value $lines -Encoding utf8
+
+      - name: Create draft release with files
+        if: steps.version.outputs.exists != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.value }}
+          target_commitish: ${{ github.sha }}
+          name: 사인검 제작 달력 ${{ steps.version.outputs.value }}
+          draft: true
+          files: release/SainCalendar-${{ steps.version.outputs.value }}.zip
+          body_path: release-notes.md
+
+      - name: Publish release
+        if: steps.version.outputs.exists != 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "v${{ steps.version.outputs.value }}" --draft=false
